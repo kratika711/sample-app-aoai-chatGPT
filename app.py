@@ -1,5 +1,4 @@
 import json
-# sd
 import os
 import logging
 import requests
@@ -46,15 +45,15 @@ AZURE_SEARCH_QUERY_TYPE = os.environ.get("AZURE_SEARCH_QUERY_TYPE")
 AZURE_SEARCH_PERMITTED_GROUPS_COLUMN = os.environ.get("AZURE_SEARCH_PERMITTED_GROUPS_COLUMN")
 
 # AOAI Integration Settings
-AZURE_OPENAI_RESOURCE = os.environ.get("AZURE_OPENAI_RESOURCE")
-AZURE_OPENAI_MODEL = os.environ.get("AZURE_OPENAI_MODEL")
-AZURE_OPENAI_ENDPOINT = os.environ.get("AZURE_OPENAI_ENDPOINT")
-AZURE_OPENAI_KEY = os.environ.get("AZURE_OPENAI_KEY")
+AZURE_OPENAI_RESOURCE = "sagar-poc"
+AZURE_OPENAI_MODEL = "gpt-35-turbo-0613"
+AZURE_OPENAI_ENDPOINT = "https://sagar-poc.openai.azure.com/"
+AZURE_OPENAI_KEY = "70d35c14588f4f73a6d6a44a6abefe3c"
 AZURE_OPENAI_TEMPERATURE = os.environ.get("AZURE_OPENAI_TEMPERATURE", 0)
 AZURE_OPENAI_TOP_P = os.environ.get("AZURE_OPENAI_TOP_P", 1.0)
 AZURE_OPENAI_MAX_TOKENS = os.environ.get("AZURE_OPENAI_MAX_TOKENS", 1000)
 AZURE_OPENAI_STOP_SEQUENCE = os.environ.get("AZURE_OPENAI_STOP_SEQUENCE")
-AZURE_OPENAI_SYSTEM_MESSAGE = os.environ.get("AZURE_OPENAI_SYSTEM_MESSAGE", "You are an AI assistant that helps with POM service requests attempt five.")
+AZURE_OPENAI_SYSTEM_MESSAGE = os.environ.get("AZURE_OPENAI_SYSTEM_MESSAGE", "You are an AI assistant that helps people find information.")
 AZURE_OPENAI_PREVIEW_API_VERSION = os.environ.get("AZURE_OPENAI_PREVIEW_API_VERSION", "2023-06-01-preview")
 AZURE_OPENAI_STREAM = os.environ.get("AZURE_OPENAI_STREAM", "true")
 AZURE_OPENAI_MODEL_NAME = os.environ.get("AZURE_OPENAI_MODEL_NAME", "gpt-35-turbo-16k") # Name of the model, e.g. 'gpt-35-turbo-16k' or 'gpt-4'
@@ -292,12 +291,56 @@ def conversation_without_data(request_body):
     openai.api_key = AZURE_OPENAI_KEY
 
     request_messages = request_body["messages"]
-    messages = [
-        {
-            "role": "system",
-            "content": AZURE_OPENAI_SYSTEM_MESSAGE
-        }
+    messages= [
+        {"role": "system", "content": "you are a AI bot to help on POM service queries. Based on the query and data given you have to run any of the defined function. If you are unable to decide on which function to run, ask for more details from the user."}
     ]
+
+    functions= [  
+        {
+            "name": "GenerateReconSAPSoldTo",
+            "description": "Generates a report if SAPSoldToNumber is provided in the query",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "SAPSoldToNumber": {
+                        "type": "string",
+                        "description": "An identification number for the report generation (i.e. '124435')"
+                    },
+                    "FromDate": {
+                        "type": "string",
+                        "description": "The starting date for the report generation in the format of month and year for example May 2021"
+                    },
+                    "ToDate": {
+                        "type": "string",
+                        "description": "The end date for the report generation in the format of month and year for example May 2021"
+                    }
+                },
+                "required": ["SAPSoldToNumber","FromDate","ToDate"]
+            }
+        },
+        {
+            "name": "GenerateReconSummaryDoc",
+            "description": "who are you?",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "SummaryDocNumber": {
+                        "type": "string",
+                        "description": "An identification number for the report generation (i.e. '124435')"
+                    },
+                    "FromDate": {
+                        "type": "string",
+                        "description": "The starting date for the report generation in the format of month and year for example May 2021"
+                    },
+                    "ToDate": {
+                        "type": "string",
+                        "description": "The end date for the report generation in the format of month and year for example May 2021"
+                    }
+                },
+                "required": ["SummaryDocNumber","FromDate","ToDate"]
+            }
+        }
+    ] 
 
     for message in request_messages:
         messages.append({
@@ -306,13 +349,10 @@ def conversation_without_data(request_body):
         })
 
     response = openai.ChatCompletion.create(
-        engine=AZURE_OPENAI_MODEL,
-        messages = messages,
-        temperature=float(AZURE_OPENAI_TEMPERATURE),
-        max_tokens=int(AZURE_OPENAI_MAX_TOKENS),
-        top_p=float(AZURE_OPENAI_TOP_P),
-        stop=AZURE_OPENAI_STOP_SEQUENCE.split("|") if AZURE_OPENAI_STOP_SEQUENCE else None,
-        stream=SHOULD_STREAM
+        engine="gpt-35-turbo-0613",
+        messages=messages,
+        functions=functions,
+        function_call="auto"
     )
 
     history_metadata = request_body.get("history_metadata", {})
