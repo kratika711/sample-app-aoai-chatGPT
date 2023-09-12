@@ -350,9 +350,7 @@ def conversation_without_data(request_body):
 
     response = openai.ChatCompletion.create(
         engine="gpt-35-turbo-0613",
-        messages=messages,
-        functions=functions,
-        function_call="auto"
+        messages=messages
     )
 
     history_metadata = request_body.get("history_metadata", {})
