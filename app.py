@@ -45,10 +45,10 @@ AZURE_SEARCH_QUERY_TYPE = os.environ.get("AZURE_SEARCH_QUERY_TYPE")
 AZURE_SEARCH_PERMITTED_GROUPS_COLUMN = os.environ.get("AZURE_SEARCH_PERMITTED_GROUPS_COLUMN")
 
 # AOAI Integration Settings
-AZURE_OPENAI_RESOURCE = "sagar-poc"
-AZURE_OPENAI_MODEL = "gpt-35-turbo-0613"
-AZURE_OPENAI_ENDPOINT = "https://sagar-poc.openai.azure.com/"
-AZURE_OPENAI_KEY = "70d35c14588f4f73a6d6a44a6abefe3c"
+AZURE_OPENAI_RESOURCE = os.environ.get("AZURE_OPENAI_RESOURCE")
+AZURE_OPENAI_MODEL = os.environ.get("AZURE_OPENAI_MODEL")
+AZURE_OPENAI_ENDPOINT = os.environ.get("AZURE_OPENAI_ENDPOINT")
+AZURE_OPENAI_KEY = os.environ.get("AZURE_OPENAI_KEY")
 AZURE_OPENAI_TEMPERATURE = os.environ.get("AZURE_OPENAI_TEMPERATURE", 0)
 AZURE_OPENAI_TOP_P = os.environ.get("AZURE_OPENAI_TOP_P", 1.0)
 AZURE_OPENAI_MAX_TOKENS = os.environ.get("AZURE_OPENAI_MAX_TOKENS", 1000)
@@ -292,7 +292,9 @@ def conversation_without_data(request_body):
 
     request_messages = request_body["messages"]
     messages= [
-        {"role": "system", "content": "you are a AI bot to help on POM service queries. Based on the query and data given you have to run any of the defined function. If you are unable to decide on which function to run, ask for more details from the user."}
+        {"role": "system",
+        "content": "you are a AI bot to help on POM service queries. Based on the query and data given you have to run any of the defined function. If you are unable to decide on which function to run, ask for more details from the user."
+        }
     ]
 
     functions= [  
@@ -349,8 +351,8 @@ def conversation_without_data(request_body):
         })
 
     response = openai.ChatCompletion.create(
-        engine="gpt-35-turbo-0613",
-        messages=messages,
+        engine=AZURE_OPENAI_MODEL,
+        messages = messages,
         temperature=float(AZURE_OPENAI_TEMPERATURE),
         max_tokens=int(AZURE_OPENAI_MAX_TOKENS),
         top_p=float(AZURE_OPENAI_TOP_P),
