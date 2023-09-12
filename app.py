@@ -350,7 +350,12 @@ def conversation_without_data(request_body):
 
     response = openai.ChatCompletion.create(
         engine="gpt-35-turbo-0613",
-        messages=messages
+        messages=messages,
+        temperature=float(AZURE_OPENAI_TEMPERATURE),
+        max_tokens=int(AZURE_OPENAI_MAX_TOKENS),
+        top_p=float(AZURE_OPENAI_TOP_P),
+        stop=AZURE_OPENAI_STOP_SEQUENCE.split("|") if AZURE_OPENAI_STOP_SEQUENCE else None,
+        stream=SHOULD_STREAM
     )
 
     history_metadata = request_body.get("history_metadata", {})
